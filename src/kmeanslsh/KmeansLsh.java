@@ -32,7 +32,7 @@ public class KmeansLsh {
     private DataPoint[] _dataPoints;
     private ClusterCenter[] _clusters;
     
-    private int _hashesCount = 10;
+    private int _hashesCount = 16;
     
     private Hashing _hashing = new Hashing();
     private Hasher[] _hashers;

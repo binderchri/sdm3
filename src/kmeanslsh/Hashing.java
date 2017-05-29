@@ -36,7 +36,13 @@ public class Hashing {
                (c.eq(4) || c.eq(5) || c.eq(6) || c.eq(7));
 
         */
-        return c.eq(0) && c.eq(1) && c.eq(2) && c.eq(3);
+        return (c.eq(0) && c.eq(1) && c.eq(2) && c.eq(3))
+                ||(c.eq(4) && c.eq(5) && c.eq(6) && c.eq(7))
+                ||(c.eq(8) && c.eq(9) && c.eq(10) && c.eq(11))
+                ||(c.eq(12) && c.eq(13) && c.eq(14) && c.eq(15))
+                ;
+                
+                
         
         /*return (equals(p1, p2, 0) || equals(p1, p2, 1) || equals(p1, p2, 2) || equals(p1, p2, 3))
                 &&
