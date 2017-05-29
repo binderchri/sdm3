@@ -20,13 +20,13 @@ public abstract class AbstractPoint {
         _values = values;
     }
     
-    public AbstractPoint(AbstractPoint other) {
-        _values = other._values;
-        _buckets = other._buckets;
-    }
+    /*public AbstractPoint(AbstractPoint other) {
+        _values = other._values.clone();
+        _buckets = other._buckets.clone();
+    }*/
     
     public void setBuckets(Hasher[] hashers) {
-        _buckets = Arrays.stream(hashers).map(h -> h.hash(_values)).mapToInt(o -> (int)(double)o % 100).toArray();
+        _buckets = Arrays.stream(hashers).map(h -> h.hash(_values)).mapToInt(o -> (int)(double)o % 10).toArray();
     }
     
     public double getDistance(AbstractPoint other) {
@@ -39,5 +39,13 @@ public abstract class AbstractPoint {
         }
         
         return Math.sqrt(sum);
+    }
+    
+    public double getValue(int dimension) {
+        return _values[dimension];
+    }
+    
+    public void setValue(int dimension, double value) {
+        _values[dimension] = value;
     }
 }

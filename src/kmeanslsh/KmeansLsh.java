@@ -16,6 +16,8 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *
@@ -26,6 +28,14 @@ public class KmeansLsh {
     private int _clustersCount = 15;
     
     private Random _random = new Random(100);
+    
+    private DataPoint[] _dataPoints;
+    private ClusterCenter[] _clusters;
+    
+    private int _hashesCount = 10;
+    
+    private Hashing _hashing = new Hashing();
+    private Hasher[] _hashers;
     
     /**
      * @param args the command line arguments
@@ -43,24 +53,80 @@ public class KmeansLsh {
         System.out.println("Read data");
     }
     
-    private void run() throws IOException {
-        DataPoint[] data = readData("/tmp/lsh.csv");
-        createHashes(data);
+    private void run1() throws IOException {
+        // just to test the orig result
+       Path path = Paths.get("/work/out.txt");
         
-        getInitialClusterCenters(data, 1000);
+       int[] one =
+               Files
+                .lines(path)
+                .mapToInt(line -> Integer.parseInt(line))
+                .toArray();
+       
+       
+       path = Paths.get("/work/inclasses.txt");
+       int[] two =
+               Files
+                .lines(path)
+                .mapToInt(line -> (int)Double.parseDouble(line))
+                .toArray();
+       
+       
+       ArrayList<Integer> oneL = new ArrayList<>();
+       ArrayList<Integer> twoL = new ArrayList<>();
+       
+       for(int i : one)
+           oneL.add(i);
+       
+       for(int i : two)
+           twoL.add(i);
+       
+       NmiCalculator.NMI(oneL, twoL);
     }
     
-    private void createHashes(DataPoint[] data) {
+    private void run() throws IOException {
+        createHashers();
+        
+        _dataPoints = readData("/tmp/lsh.csv");
+        calculateBuckets(_dataPoints);
+        
+        _clusters = getInitialClusterCenters(1000);       
+        calculateBuckets(_clusters);
+        
+        printBuckets(_clusters);
+        
+        boolean centersChanged = true;
+        int iterations = 0;
+        int maxIterations = 1000;
+        
+        while(centersChanged && iterations++ < maxIterations) {
+            centersChanged = assignPointsToCenters();
+            recalculateClusterCenters();
+            calculateBuckets(_clusters);
+          
+            if(iterations % 5 == 0)
+                System.out.println("Iteration" + iterations);
+
+
+//            double nmi = NmiCalculator.calculateNmi(_dataPoints);
+  //          System.out.println("Iterations:" + iterations + ", NMI:" + nmi);
+            
+            //printBuckets(_clusters);
+        }
+        
+        double nmi = NmiCalculator.calculateNmi(_dataPoints);
+        System.out.println("Iterations:" + iterations + ", NMI:" + nmi);
+        
+    }
+    
+    private void createHashers() {
         Random rnd = getRandom();
-        
-        Hasher[] hashers = {
-          new Hasher(_dimensions, rnd),
-          new Hasher(_dimensions, rnd),
-          new Hasher(_dimensions, rnd)    
-        };
-        
-        for(DataPoint d : data) 
-            d.setBuckets(hashers);
+        _hashers = IntStream.range(0, _hashesCount).boxed().map(i -> new Hasher(_dimensions, rnd)).toArray(Hasher[]::new);
+    }
+    
+    private void calculateBuckets(AbstractPoint[] data) {
+        for(AbstractPoint d : data) 
+            d.setBuckets(_hashers);
     }
     
     private DataPoint[] readData(String inputFilename) throws IOException {
@@ -90,7 +156,7 @@ public class KmeansLsh {
         return _random; // for reproducible results
     }
     
-    private ClusterCenter[] getInitialClusterCenters(DataPoint[] dataPoints, int pointsCount) {
+    private ClusterCenter[] getInitialClusterCenters(int pointsCount) {
         // take random subset of size pointsCount of dataPoints
         // take any point as first cluster center
         // find the point most far away and use it as second cluster center
@@ -99,11 +165,11 @@ public class KmeansLsh {
         
         Random rnd = getRandom();
         
-        List<DataPoint> samples = rnd.ints(pointsCount, 0, dataPoints.length).mapToObj(i -> dataPoints[i]).collect(Collectors.toList());
-        ArrayList<ClusterCenter> chosenPoints = new ArrayList<ClusterCenter>(_clustersCount);
+        List<DataPoint> samples = rnd.ints(pointsCount, 0, _dataPoints.length).mapToObj(i -> _dataPoints[i]).collect(Collectors.toList());
+        ArrayList<ClusterCenter> chosenPoints = new ArrayList<>(_clustersCount);
         
-        DataPoint chosenPoint = dataPoints[rnd.nextInt(dataPoints.length)];
-        chosenPoints.add(new ClusterCenter(chosenPoint));
+        DataPoint chosenPoint = _dataPoints[rnd.nextInt(_dataPoints.length)];
+        chosenPoints.add(new ClusterCenter(chosenPoint._values.clone()));
         
         while(chosenPoints.size() < _clustersCount) {
             DataPoint max = null;
@@ -119,11 +185,91 @@ public class KmeansLsh {
             }
             
             samples.remove(max);
-            chosenPoints.add(new ClusterCenter(max));
+            ClusterCenter clusterCenter = new ClusterCenter(max._values.clone());
+            clusterCenter._id = chosenPoints.size();
+            chosenPoints.add(clusterCenter);
         }
         
         return chosenPoints.toArray(new ClusterCenter[chosenPoints.size()]);
     }
+    
+    private boolean assignPointsToCenters() {
+        //TODO: make this fast
+        
+        //ArrayList<DataPoint> withoutCenter = new ArrayList<>();
+        boolean anyClusterChanged = false;
+        int fullDistanceCalculationCount = 0;
+        int clustersChanged = 0;
+        
+        // HASHING
+        for(DataPoint dp : _dataPoints) {
+            ClusterCenter center = findCenterWithHashing(dp);
+            
+            if(center == null) {
+                center = findCenterWithDistance(dp);
+                fullDistanceCalculationCount ++;
+            } 
+            
+            if(dp.setCluster(center))  {
+                anyClusterChanged = true;
+                clustersChanged ++;
+            }
+        }
+        
+        System.out.println("full dist calc:" + fullDistanceCalculationCount + ", total:" + _dataPoints.length + ", cluster changed:" + clustersChanged);
+        
+        return anyClusterChanged;
+    }
+    
+    private ClusterCenter findCenterWithHashing(DataPoint dp) {
+        for(ClusterCenter center : _clusters) {
+            if(_hashing.isSameBucket(dp, center))
+                return center;
+        }
+        
+        return null;
+    }
+    
+    private ClusterCenter findCenterWithDistance(DataPoint dp) {
+        ClusterCenter nearest = null;
+        double nearestDistance = 0;
+        
+        for(ClusterCenter center : _clusters) {
+            double distance = center.getDistance(dp);
+            
+            if(nearest == null || distance < nearestDistance) {
+                nearest = center;
+                nearestDistance = distance;
+            }
+        }
+        
+        return nearest;
+    }
+    
+    private void printBuckets(AbstractPoint[] points) {
+        for(AbstractPoint p : points) {
+            int id = -1;
+            if(p instanceof ClusterCenter)
+                id = ((ClusterCenter)p)._id;
+            
+            System.out.println(id + " ... " + Arrays.toString(p._buckets));
+        }
+        
+    }
+    
+    private void recalculateClusterCenters() {
+        for(ClusterCenter center : _clusters) {
+            for(int d = 0; d < _dimensions; d++) {
+                final int fd = d; // must be final for lambda expression
+                double sum = center._dataPoints.stream().mapToDouble(dp -> dp.getValue(fd)).sum();
+                double avg = sum / center._dataPoints.size();
+                center.setValue(d, avg);
+            }
+        }
+        
+        
+    }
+    
     
     
 }
