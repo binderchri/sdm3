@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,7 +97,7 @@ public class KmeansLsh {
         createHashers();
         
         _dataPoints = readData("/work/lsh.csv");
-        //normalizeDataPoints(_dataPoints);
+        normalizeDataPoints(_dataPoints);
 
         if(s_verboseOutput) {
             calculateBuckets(_dataPoints);
@@ -122,7 +123,6 @@ public class KmeansLsh {
         
         while(centersChanged && ++iterations < maxIterations) {
             centersChanged = assignPointsToCenters();
-            
             
             recalculateClusterCenters(_clusters);
             calculateBuckets(_clusters);
@@ -183,7 +183,8 @@ public class KmeansLsh {
     }
     
     private Random getRandom() {
-        return _random; // for reproducible results
+        //return _random; // for reproducible results
+        return new SecureRandom();
     }
     
     /*private ClusterCenter[] getInitialClusterCenters(int pointsCount) {
@@ -315,12 +316,12 @@ public class KmeansLsh {
     private ClusterCenter findCenterWithHashing(DataPoint dp) {
         // First check currently assigned cluster, maybe it's still in the same bucket
         ClusterCenter currentCluster = dp.getCluster();
-        //if(currentCluster != null && _hashing.isSameBucket(dp, currentCluster))
-            //return currentCluster;
+        if(currentCluster != null && _hashing.isSameBucket(dp, currentCluster))
+            return currentCluster;
         
         for(ClusterCenter cluster : _clusters) {
-            //if(cluster == currentCluster)
-            //    continue; // This is already checked
+            if(cluster == currentCluster)
+                continue; // This is already checked
             
             if(_hashing.isSameBucket(dp, cluster))
                 return cluster;

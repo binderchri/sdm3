@@ -43,12 +43,14 @@ public class Hasher {
     }
     
     public int hashAndGetBucket(double[] values) {
-        //returns a value from 0 to bucketCount on normalized data
+        //returns a value from -bucketCount to bucketCount on normalized data
         final int bucketCount = 100;
         
         double hashed = hash(values);
-        //int bucket = (int)(hashed / _dimensions * bucketCount); 
-        int bucket = (int)((double)hashed / 10);
+        int bucket = (int)(hashed / _dimensions * bucketCount); 
+        
+        // for unnormaized data:
+        //int bucket = (int)((double)hashed / 10);
         
         return bucket;
         

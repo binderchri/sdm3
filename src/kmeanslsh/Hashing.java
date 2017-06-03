@@ -1,59 +1,61 @@
 package kmeanslsh;
 
+import java.util.stream.IntStream;
+
 public class Hashing {
     
-    public boolean isSameBucket(AbstractPoint p1, AbstractPoint p2) {
-        /*
-        // this is a hard coded AND
-        for(int i = 0; i < p1._buckets.length; i++) {
-            if(p1._buckets[i] != p2._buckets[i])
-                return false;
-        }
-        
-        return true;*/
-        
-        // this is a hard coded OR
-/*        for(int i = 0; i < p1._buckets.length; i++) {
-            if(p1._buckets[i] == p2._buckets[i])
-                return true;
-        }
-        
-        return false;
-  */      
-        check c = new check(p1, p2);
-
-        /*return (c.eq(0) || c.eq(1) || c.eq(2) || c.eq(3))
-                &&
-               (c.eq(4) || c.eq(5) || c.eq(6) || c.eq(7));*/
-
-        
-        return (c.eq(0) && c.eq(1)) || (c.eq(2) && c.eq(3));
-        
-        //return false;
-        
-        /*return (c.eq(0) && c.eq(1) && c.eq(2) && c.eq(3))
-                ||(c.eq(4) && c.eq(5) && c.eq(6) && c.eq(7))
-                ||(c.eq(8) && c.eq(9) && c.eq(10) && c.eq(11))
-                ||(c.eq(12) && c.eq(13) && c.eq(14) && c.eq(15))
-                ;
-          */      
-                
-        
-        /*return (equals(p1, p2, 0) || equals(p1, p2, 1) || equals(p1, p2, 2) || equals(p1, p2, 3))
-                &&
-               (equals(p1, p2, 4) || equals(p1, p2, 5) || equals(p1, p2, 6) || equals(p1, p2, 7));
-*/
+    // initialize arrays only once to gain performance
+    
+    // for 2x2
+    int[] idx_01 = range(0,1);
+    int[] idx_23 = range(2,3);
+    
+    // for 4x3
+    int[] idx_012 = range(0,2);
+    int[] idx_345 = range(3,5);
+    int[] idx_678 = range(6,8);
+    int[] idx_91011 = range(9,11);
+    
+    // for 4x4
+    int[] idx_0_3 = range(0,3);
+    int[] idx_4_7 = range(4,7);
+    int[] idx_8_11 = range(8,11);
+    int[] idx_12_15 = range(12,15);
+    
+    // Take care that the amount of available hashes is defined in:
+    //   KmeansLsh.java, variable _hashesCount
+    
+    private static int[] range(int from, int to) {
+        // e.g. range(1,3) creates [1,2,3]
+        return IntStream.rangeClosed(from, to).toArray();
     }
+    
+    public boolean isSameBucket(AbstractPoint p1, AbstractPoint p2) {
+        c.set(p1, p2);
+        
+        // Here you define the hash combination
+        
+        // 4x3
+        //return c.and(idx_012) || c.and(idx_345) || c.and(idx_678) || c.and(idx_91011);
+        
+        // 2x2
+        //return c.and(idx_01) || c.and(idx_23);
+        
+        // 4x4
+        return c.and(idx_0_3) || c.and(idx_4_7) || c.and(idx_8_11) || c.and(idx_12_15);
+    }
+    
+    Checker c = new Checker();
     
     private boolean equals(AbstractPoint p1, AbstractPoint p2, int bucketIndex) {
         return p1._buckets[bucketIndex] == p2._buckets[bucketIndex];
     }
     
-    private class check {
-        private final AbstractPoint p1;
-        private final AbstractPoint p2;
-        
-        public check(AbstractPoint p1, AbstractPoint p2) {
+    private class Checker {
+        private AbstractPoint p1;
+        private AbstractPoint p2;
+               
+        public void set(AbstractPoint p1, AbstractPoint p2) {
             this.p1 = p1;
             this.p2 = p2;
         }
@@ -61,7 +63,19 @@ public class Hashing {
         public boolean eq(int bucketIndex) {
             return p1._buckets[bucketIndex] == p2._buckets[bucketIndex];
         }
+        
+        public boolean and(int[] bucketIndices) {
+            for(int index : bucketIndices)
+                if(eq(index) == false)
+                    return false;
+            return true;
+        }
+        
+        public boolean or(int[] bucketIndices) {
+            for(int index : bucketIndices)
+                if(eq(index) == true)
+                    return true;
+            return false;
+        }
     }
-    
-    
 }

@@ -62,7 +62,7 @@ public abstract class AbstractPoint {
         
         result += "  -- Buckets: ";
         
-        for(double b : _buckets) {
+        for(int b : _buckets) {
             result += (b + ";");
         }
         
