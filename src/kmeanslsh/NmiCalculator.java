@@ -83,7 +83,7 @@ public class NmiCalculator {
 		double IUV = HU-HUstrichV;
 		double reto = IUV/(Math.max(HU, HV));
 
-		System.out.println("NMI: "+reto);
+		//System.out.println("NMI: "+reto);
 		return reto;
 	}
 }

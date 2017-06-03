@@ -26,7 +26,8 @@ public abstract class AbstractPoint {
     }*/
     
     public void setBuckets(Hasher[] hashers) {
-        _buckets = Arrays.stream(hashers).map(h -> h.hash(_values)).mapToInt(o -> (int)(double)o % 10).toArray();
+        //_buckets = Arrays.stream(hashers).map(h -> h.hash(_values)).mapToInt(o -> (int)(double)o % 10).toArray();
+        _buckets = Arrays.stream(hashers).mapToInt(h -> h.hashAndGetBucket(_values)).toArray();
     }
     
     public double getDistance(AbstractPoint other) {
@@ -48,4 +49,25 @@ public abstract class AbstractPoint {
     public void setValue(int dimension, double value) {
         _values[dimension] = value;
     }
+
+    @Override
+    public String toString() {
+        String result= "datapoint: Values:";
+        for(double v : _values) {
+            result += (v + ";");
+        }
+        
+        if(_buckets == null) 
+            return result;
+        
+        result += "  -- Buckets: ";
+        
+        for(double b : _buckets) {
+            result += (b + ";");
+        }
+        
+        return result;
+    }
+    
+    
 }
