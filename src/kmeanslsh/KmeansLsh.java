@@ -35,22 +35,19 @@ public class KmeansLsh {
     
     private int _hashesCount = 16;
     
+    private int _bucketsCount = -1;
+    
     private Hashing _hashing = new Hashing();
     private Hasher[] _hashers;
     
     public static boolean s_verboseOutput = false;
     
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
-        // TODO code application logic here
-        
         KmeansLsh app = new KmeansLsh();
         try {
             app.parseArguments(args);
             app.run();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             System.err.println("ERROR:" + ex.getMessage());
         }
     }
@@ -59,6 +56,10 @@ public class KmeansLsh {
         for(String arg : args) {
             if("-v".equals(arg))
                 s_verboseOutput = true;
+            if(arg.startsWith("-b")) {
+                // e.g. -b100 for 100 buckets
+                _bucketsCount = Integer.parseInt(arg.substring(2));
+            }
         }
     }
     
@@ -93,12 +94,12 @@ public class KmeansLsh {
        NmiCalculator.NMI(oneL, twoL);
     }
     
-    private void run() throws IOException {
+    private void run() throws IOException, Exception {
         createHashers();
         
         _dataPoints = readData("/work/lsh.csv");
         normalizeDataPoints(_dataPoints);
-
+        
         if(s_verboseOutput) {
             calculateBuckets(_dataPoints);
             for(int i = 0; i < 20 ; i++)
@@ -119,7 +120,7 @@ public class KmeansLsh {
         boolean centersChanged = true;
         int iterations = 0;
         int maxIterations = 500;
-        int rehashingIterations = (int)(maxIterations / 2);
+        //int rehashingIterations = (int)(maxIterations / 2);
         
         while(centersChanged && ++iterations < maxIterations) {
             centersChanged = assignPointsToCenters();
@@ -131,8 +132,8 @@ public class KmeansLsh {
                 System.out.println("Iteration" + iterations);
             
             // If we don't converge after a time, we'll try it with other hashes
-            if(iterations % rehashingIterations == 0)
-                createNewHashesAndReassignBuckets();
+            //if(iterations % rehashingIterations == 0)
+                //createNewHashesAndReassignBuckets();
         }
         
         long endTime = System.nanoTime();
@@ -145,13 +146,17 @@ public class KmeansLsh {
                 ";  NMI:" + nmi +
                 ";  Elapsed_seconds:" + elapsedSeconds +
                 ";  Distance_calculations:" + _lastFullDistanceCalculationCount +
-                ";  Datapoint_count:" + _dataPoints.length
+                ";  Datapoint_count:" + _dataPoints.length +
+                ";  Buckets_count:" + _bucketsCount
         );
     }
     
-    private void createHashers() {
+    private void createHashers() throws Exception {
+        if(_bucketsCount < 0)
+            throw new Exception("-b parameter must be used to set the amount of buckets, e.g. -b100");
+        
         Random rnd = getRandom();
-        _hashers = IntStream.range(0, _hashesCount).boxed().map(i -> new Hasher(_dimensions, rnd)).toArray(Hasher[]::new);
+        _hashers = IntStream.range(0, _hashesCount).boxed().map(i -> new Hasher(_dimensions, rnd, _bucketsCount)).toArray(Hasher[]::new);
     }
     
     private void calculateBuckets(AbstractPoint[] data) {
@@ -403,14 +408,14 @@ public class KmeansLsh {
         }
     }
     
-    private void createNewHashesAndReassignBuckets() {
+    /*private void createNewHashesAndReassignBuckets() {
         if(s_verboseOutput)
             System.out.println("=== createNewHashesAndReassignBuckets");
         
         createHashers();
         calculateBuckets(_dataPoints);
         calculateBuckets(_clusters);
-    }
+    }*/
     
     
     

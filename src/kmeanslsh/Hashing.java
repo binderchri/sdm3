@@ -42,7 +42,10 @@ public class Hashing {
         //return c.and(idx_01) || c.and(idx_23);
         
         // 4x4
-        return c.and(idx_0_3) || c.and(idx_4_7) || c.and(idx_8_11) || c.and(idx_12_15);
+        //return c.and(idx_0_3) || c.and(idx_4_7) || c.and(idx_8_11) || c.and(idx_12_15);
+        
+        // 8x2
+        return (c.and(idx_0_3) && c.and(idx_4_7)) || (c.and(idx_8_11) && c.and(idx_12_15));
     }
     
     Checker c = new Checker();

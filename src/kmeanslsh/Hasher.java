@@ -20,13 +20,15 @@ public class Hasher {
     private double[] _hash;
     
     
-    public Hasher(int dimensions, Random r) {
+    public Hasher(int dimensions, Random r, int bucketCount) {
         _dimensions = dimensions;
         
         _hash = IntStream.range(0, dimensions)
                 .asDoubleStream()
                 .map(i -> r.nextGaussian())
                 .toArray();
+        
+        _bucketCountFactor = bucketCount / 2D;
     }
     
     public double hash(double[] values) {
@@ -42,12 +44,13 @@ public class Hasher {
         return result;
     }
     
+    final double _bucketCountFactor; // = 75           / 2; // yields twice as much buckets!
     public int hashAndGetBucket(double[] values) {
         //returns a value from -bucketCount to bucketCount on normalized data
-        final int bucketCount = 100;
         
         double hashed = hash(values);
-        int bucket = (int)(hashed / _dimensions * bucketCount); 
+        //int bucket = (int)(hashed / _dimensions * _bucketCountFactor); 
+        int bucket = hashed >= 0 ? 1 : 0;
         
         // for unnormaized data:
         //int bucket = (int)((double)hashed / 10);
