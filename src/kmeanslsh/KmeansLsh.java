@@ -20,67 +20,74 @@ public class KmeansLsh {
     private final int _hashesCount = 16;
     private int _bucketsCount = -1;
     
-    private final Hashing _hashing = new Hashing();
+    private Hashing _hashing;
+    private int _comparison = 1;
     private Hasher[] _hashers;
     
     public static boolean s_verboseOutput = false;
+        
+    private String _filename = "/work/lsh.csv";
     
     public static void main(String[] args) {
         KmeansLsh app = new KmeansLsh();
         try {
-            app.parseArguments(args);
-            app.run();
+            if(app.parseArguments(args)) {
+                app.run();
+            }
         } catch (Exception ex) {
-            System.err.println("ERROR:" + ex.getMessage());
+            System.err.println("ERROR:" + ex.toString());
         }
     }
     
-    private void parseArguments(String[] args) {
+    private boolean parseArguments(String[] args) throws Exception {
+        if(args.length == 0) {
+            printHelp();
+            return false;
+        }
+        
+        boolean nextIsFilename = false;
         for(String arg : args) {
+            if(nextIsFilename) {
+                _filename = arg;
+                nextIsFilename = false;
+            }
+            
             if("-v".equals(arg))
                 s_verboseOutput = true;
-            if(arg.startsWith("-b")) {
+            else if(arg.startsWith("-b")) {
                 // e.g. -b100 for 100 buckets
                 _bucketsCount = Integer.parseInt(arg.substring(2));
+            } else if(arg.startsWith("-c")) {
+                // e.g. -c1
+                _comparison = Integer.parseInt(arg.substring(2));
+            } else if(arg.startsWith("-f")) {
+                nextIsFilename = true;
+            } else if(arg.startsWith("-h")) {
+                printHelp();
+                return false;
             }
         }
+        
+        if(nextIsFilename)
+            throw new Exception("After -f parameter, the filename must follow.");
+        
+        return true;
     }
     
-    private void run1() throws IOException {
-        // just to test the orig result
-       Path path = Paths.get("/work/out.txt");
-        
-       int[] one =
-               Files
-                .lines(path)
-                .mapToInt(line -> Integer.parseInt(line))
-                .toArray();
-       
-       
-       path = Paths.get("/work/inclasses.txt");
-       int[] two =
-               Files
-                .lines(path)
-                .mapToInt(line -> (int)Double.parseDouble(line))
-                .toArray();
-       
-       
-       ArrayList<Integer> oneL = new ArrayList<>();
-       ArrayList<Integer> twoL = new ArrayList<>();
-       
-       for(int i : one)
-           oneL.add(i);
-       
-       for(int i : two)
-           twoL.add(i);
-       
-       NmiCalculator.NMI(oneL, twoL);
+    private void printHelp() {
+        System.out.println("KmeansLsh uses the following parameters:");
+        System.out.println("  -b<bucketCount> ... eg. -b100");
+        System.out.println("  -c<comparison> ... eg. -c1 ... possible values: 1=2x2, 2=4x4, 3=8x2, default is 1");
+        System.out.println("  -f <filename> ... default is /work/lsh.csv");
+        System.out.println("  -h ... prints this help");
     }
     
     private void run() throws IOException, Exception {
+        _hashing = new Hashing(_comparison);
+        
         createHashers();
         
-        _dataPoints = readData("/work/lsh.csv");
+        _dataPoints = readData(_filename);
         normalizeDataPoints(_dataPoints);
         
         if(s_verboseOutput) {

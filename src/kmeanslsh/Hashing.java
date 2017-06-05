@@ -3,6 +3,15 @@ package kmeanslsh;
 import java.util.stream.IntStream;
 
 public class Hashing {
+
+    private final int _comparison;
+    public Hashing(int comparison) throws Exception {
+        this._comparison = comparison;
+        
+        if(comparison < 1 || comparison > 3)
+            throw new Exception("Comparison type must be either 1,2 or 3");
+    }
+        
     // initialize arrays only once to gain performance
     
     // for 2x2
@@ -33,15 +42,19 @@ public class Hashing {
         c.set(p1, p2);
         
         // Here you define the hash combination
-        
-        // 2x2
-        //return c.and(idx_01) || c.and(idx_23);
-        
-        // 4x4
-        //return c.and(idx_0_3) || c.and(idx_4_7) || c.and(idx_8_11) || c.and(idx_12_15);
-        
-        // 8x2
-        return (c.and(idx_0_3) && c.and(idx_4_7)) || (c.and(idx_8_11) && c.and(idx_12_15));
+        switch (_comparison) {
+            case 1:
+                // 2x2
+                return c.and(idx_01) || c.and(idx_23);
+            case 2:
+                // 4x4
+                return c.and(idx_0_3) || c.and(idx_4_7) || c.and(idx_8_11) || c.and(idx_12_15);
+            case 3:
+                // 8x2
+                return (c.and(idx_0_3) && c.and(idx_4_7)) || (c.and(idx_8_11) && c.and(idx_12_15));
+            default:
+                throw new AssertionError();
+        }
     }
     
     Checker c = new Checker();
