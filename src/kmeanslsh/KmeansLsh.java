@@ -76,7 +76,7 @@ public class KmeansLsh {
     
     private void printHelp() {
         System.out.println("KmeansLsh uses the following parameters:");
-        System.out.println("  -b<bucketCount> ... eg. -b100, when bucketCount=2, then R+/R- bucket assignment is used");
+        System.out.println("  -b<bucketCount> ... eg. -b100, when bucketCount=2, then R+/R- bucket assignment is used (required parameter)");
         System.out.println("  -c<comparison> ... eg. -c1 ... possible values: 1=2x2, 2=4x4, 3=8x2, default is 1");
         System.out.println("  -f <filename> ... default is /work/lsh.csv");
         System.out.println("  -h ... prints this help");
