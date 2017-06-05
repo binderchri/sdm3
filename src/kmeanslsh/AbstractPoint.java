@@ -2,16 +2,6 @@ package kmeanslsh;
 
 import java.util.Arrays;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- *
- * @author binderchri
- */
 public abstract class AbstractPoint {
     protected double[] _values;
     protected int[] _buckets;
@@ -20,13 +10,7 @@ public abstract class AbstractPoint {
         _values = values;
     }
     
-    /*public AbstractPoint(AbstractPoint other) {
-        _values = other._values.clone();
-        _buckets = other._buckets.clone();
-    }*/
-    
     public void setBuckets(Hasher[] hashers) {
-        //_buckets = Arrays.stream(hashers).map(h -> h.hash(_values)).mapToInt(o -> (int)(double)o % 10).toArray();
         _buckets = Arrays.stream(hashers).mapToInt(h -> h.hashAndGetBucket(_values)).toArray();
     }
     
@@ -68,6 +52,4 @@ public abstract class AbstractPoint {
         
         return result;
     }
-    
-    
 }

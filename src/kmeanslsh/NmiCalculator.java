@@ -3,10 +3,6 @@ package kmeanslsh;
 import java.util.ArrayList;
 import java.util.Collections;
 
-/**
- *
- * @author Gruppe10
- */
 public class NmiCalculator {
     public static double calculateNmi(DataPoint[] dataPoints) {
         ArrayList<Integer> trueClass = new ArrayList<>(dataPoints.length);
@@ -20,8 +16,7 @@ public class NmiCalculator {
         double nmi = NMI(trueClass, predictedClass);
         return nmi;
     }
-    
-    
+
     // https://gist.github.com/perdacherMartin/76689fdf2c950fbeba6b013d09906de4
     public static double NMI(ArrayList<Integer> one, ArrayList<Integer> two){
 		if(one.size()!=two.size()){
@@ -83,7 +78,6 @@ public class NmiCalculator {
 		double IUV = HU-HUstrichV;
 		double reto = IUV/(Math.max(HU, HV));
 
-		//System.out.println("NMI: "+reto);
 		return reto;
 	}
 }

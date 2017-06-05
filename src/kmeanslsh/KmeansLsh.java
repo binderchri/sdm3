@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package kmeanslsh;
 
 import java.io.IOException;
@@ -12,32 +7,20 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-/**
- *
- * @author binderchri
- */
 public class KmeansLsh {
-    private int _dimensions = 10;
-    private int _clustersCount = 15;
-    
-    private Random _random = new Random();
+    private final int _dimensions = 10;
+    private final int _clustersCount = 15;
     
     private DataPoint[] _dataPoints;
     private ClusterCenter[] _clusters;
     
-    private int _hashesCount = 16;
-    
+    private final int _hashesCount = 16;
     private int _bucketsCount = -1;
     
-    private Hashing _hashing = new Hashing();
+    private final Hashing _hashing = new Hashing();
     private Hasher[] _hashers;
     
     public static boolean s_verboseOutput = false;
@@ -109,7 +92,6 @@ public class KmeansLsh {
         long startTime = System.nanoTime();
                 
         _clusters = getInitialClusterCenters();       
-        //_clusters = getInitialClusterCenters2();       
         
         calculateBuckets(_dataPoints);
         calculateBuckets(_clusters);
@@ -120,7 +102,6 @@ public class KmeansLsh {
         boolean centersChanged = true;
         int iterations = 0;
         int maxIterations = 500;
-        //int rehashingIterations = (int)(maxIterations / 2);
         
         while(centersChanged && ++iterations < maxIterations) {
             centersChanged = assignPointsToCenters();
@@ -130,10 +111,6 @@ public class KmeansLsh {
           
             if(s_verboseOutput && iterations % 5 == 0)
                 System.out.println("Iteration" + iterations);
-            
-            // If we don't converge after a time, we'll try it with other hashes
-            //if(iterations % rehashingIterations == 0)
-                //createNewHashesAndReassignBuckets();
         }
         
         long endTime = System.nanoTime();
@@ -187,50 +164,11 @@ public class KmeansLsh {
         return new DataPoint(data, classification);
     }
     
+    //Random _random = new Random(100);
     private Random getRandom() {
         //return _random; // for reproducible results
         return new SecureRandom();
     }
-    
-    /*private ClusterCenter[] getInitialClusterCenters(int pointsCount) {
-        // take random subset of size pointsCount of dataPoints
-        // take any point as first cluster center
-        // find the point most far away and use it as second cluster center
-        // find next point, which is most far away from already selected points
-        // repeat this step untiel the specified amount of clusters is reached
-        
-        Random rnd = getRandom();
-        
-        //List<DataPoint> samples = rnd.ints(pointsCount, 0, _dataPoints.length).mapToObj(i -> _dataPoints[i]).collect(Collectors.toList());
-        //List<DataPoint> samples = new ArrayList<DataPoint>(); //  rnd.ints(pointsCount, 0, _dataPoints.length).mapToObj(i -> _dataPoints[i]).collect(Collectors.toList());
-        List<DataPoint> samples = _dataPoints;
-            
-        ArrayList<ClusterCenter> chosenPoints = new ArrayList<>(_clustersCount);
-        
-        DataPoint chosenPoint = _dataPoints[rnd.nextInt(_dataPoints.length)];
-        chosenPoints.add(new ClusterCenter(chosenPoint._values.clone()));
-        
-        while(chosenPoints.size() < _clustersCount) {
-            DataPoint max = null;
-            double maxDistance = 0;
-            
-            // select point with max distance to all selected points
-            for(DataPoint d : samples) {
-                double distance = chosenPoints.stream().mapToDouble(p -> p.getDistance(d)).sum();
-                if(distance > maxDistance) {
-                    maxDistance = distance;
-                    max = d;
-                }
-            }
-            
-            //samples.remove(max);
-            ClusterCenter clusterCenter = new ClusterCenter(max._values.clone());
-            clusterCenter._id = chosenPoints.size();
-            chosenPoints.add(clusterCenter);
-        }
-        
-        return chosenPoints.toArray(new ClusterCenter[chosenPoints.size()]);
-    }*/
     
     private ClusterCenter[] getInitialClusterCenters() {
         // take any point as first cluster center
@@ -272,30 +210,12 @@ public class KmeansLsh {
         
         return clusterCenters.toArray(new ClusterCenter[clusterCenters.size()]);
     }
-    
-    /*private ClusterCenter[] getInitialClusterCenters2() {
-        Random rnd = getRandom();
         
-        ClusterCenter[] centers = new ClusterCenter[_clustersCount];
-        for(int i = 0; i < _clustersCount; i++)
-            centers[i] = new ClusterCenter(new double[_dimensions]);
-        
-        for(DataPoint dp : _dataPoints) {
-            dp.setCluster(centers[rnd.nextInt(_clustersCount)]);
-        }
-        
-        recalculateClusterCenters(centers);
-        
-       return centers;
-    }*/
-    
     int _lastFullDistanceCalculationCount = -1;
     private boolean assignPointsToCenters() {
-        //boolean anyClusterChanged = false;
         _lastFullDistanceCalculationCount = 0;
         int clustersChanged = 0;
         
-        // HASHING
         for(DataPoint dp : _dataPoints) {
             ClusterCenter center = null;
             center = findCenterWithHashing(dp);
@@ -306,7 +226,6 @@ public class KmeansLsh {
             } 
                         
             if(dp.setCluster(center))  {
-                //anyClusterChanged = true;
                 clustersChanged ++;
             }
         }
@@ -359,7 +278,6 @@ public class KmeansLsh {
             
             System.out.println(id + " ... " + Arrays.toString(p._buckets));
         }
-        
     }
     
     private void recalculateClusterCenters(ClusterCenter[] clusterCenters) {
@@ -407,16 +325,4 @@ public class KmeansLsh {
             dp.setValue(dimension, normalized);
         }
     }
-    
-    /*private void createNewHashesAndReassignBuckets() {
-        if(s_verboseOutput)
-            System.out.println("=== createNewHashesAndReassignBuckets");
-        
-        createHashers();
-        calculateBuckets(_dataPoints);
-        calculateBuckets(_clusters);
-    }*/
-    
-    
-    
 }

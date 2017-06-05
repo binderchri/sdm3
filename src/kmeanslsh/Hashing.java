@@ -3,7 +3,6 @@ package kmeanslsh;
 import java.util.stream.IntStream;
 
 public class Hashing {
-    
     // initialize arrays only once to gain performance
     
     // for 2x2
@@ -34,9 +33,6 @@ public class Hashing {
         c.set(p1, p2);
         
         // Here you define the hash combination
-        
-        // 4x3
-        //return c.and(idx_012) || c.and(idx_345) || c.and(idx_678) || c.and(idx_91011);
         
         // 2x2
         //return c.and(idx_01) || c.and(idx_23);
@@ -72,13 +68,6 @@ public class Hashing {
                 if(eq(index) == false)
                     return false;
             return true;
-        }
-        
-        public boolean or(int[] bucketIndices) {
-            for(int index : bucketIndices)
-                if(eq(index) == true)
-                    return true;
-            return false;
         }
     }
 }

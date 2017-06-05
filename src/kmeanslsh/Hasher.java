@@ -1,20 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package kmeanslsh;
 
-import java.util.Arrays;
 import java.util.Random;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-/**
- *
- * @author binderchri
- */
 public class Hasher {
     private final int _dimensions;
     private double[] _hash;
@@ -44,19 +32,14 @@ public class Hasher {
         return result;
     }
     
-    final double _bucketCountFactor; // = 75           / 2; // yields twice as much buckets!
+    final double _bucketCountFactor;
     public int hashAndGetBucket(double[] values) {
-        //returns a value from -bucketCount to bucketCount on normalized data
+        //returns a value from -bucketCountFactor to bucketCountFactor on normalized data
         
         double hashed = hash(values);
-        //int bucket = (int)(hashed / _dimensions * _bucketCountFactor); 
-        int bucket = hashed >= 0 ? 1 : 0;
-        
-        // for unnormaized data:
-        //int bucket = (int)((double)hashed / 10);
+        int bucket = (int)(hashed / _dimensions * _bucketCountFactor); 
+        //int bucket = hashed >= 0 ? 1 : 0; // used for R+/R- buckets
         
         return bucket;
-        
-//        mapToInt(o -> (int)((double)o))
     }
 }
