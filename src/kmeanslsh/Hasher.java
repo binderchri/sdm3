@@ -6,8 +6,7 @@ import java.util.stream.IntStream;
 public class Hasher {
     private final int _dimensions;
     private double[] _hash;
-    
-    
+        
     public Hasher(int dimensions, Random r, int bucketCount) {
         _dimensions = dimensions;
         
@@ -17,6 +16,7 @@ public class Hasher {
                 .toArray();
         
         _bucketCountFactor = bucketCount / 2D;
+        _useSignForBucket = bucketCount == 2;
     }
     
     public double hash(double[] values) {
@@ -32,13 +32,18 @@ public class Hasher {
         return result;
     }
     
-    final double _bucketCountFactor;
+    private final double _bucketCountFactor;
+    private final boolean _useSignForBucket;
     public int hashAndGetBucket(double[] values) {
         //returns a value from -bucketCountFactor to bucketCountFactor on normalized data
         
         double hashed = hash(values);
-        int bucket = (int)(hashed / _dimensions * _bucketCountFactor); 
-        //int bucket = hashed >= 0 ? 1 : 0; // used for R+/R- buckets
+        
+        int bucket;
+        if(_useSignForBucket)
+            bucket = hashed >= 0 ? 1 : 0; // used for R+/R- buckets
+        else
+            bucket = (int)(hashed / _dimensions * _bucketCountFactor); 
         
         return bucket;
     }
